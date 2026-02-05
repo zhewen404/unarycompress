@@ -1,0 +1,14 @@
+.synopsys_dc.setup
+*.syn
+*.pvl
+*.mr
+*.svf
+reports/
+outputs/
+cksum_dir/
+work/
+run_synthesis.sh
+synthesis_area_opt.tcl
+clean.sh
+*_sim
+*.vcd
