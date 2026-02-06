@@ -50,7 +50,6 @@ module histogram_decompressor #(
 
     // LFSR signals
     wire [LFSR_WIDTH-1:0] lfsr_value;
-    reg lfsr_enable;
     
     // Working counters (count down from input values)
     reg [COUNTER_WIDTH-1:0] work_count_00;
@@ -64,8 +63,6 @@ module histogram_decompressor #(
     
     // Random bin selection logic
     reg [1:0] selected_bin;
-    wire [1:0] random_2bit;
-    assign random_2bit = lfsr_value[1:0];
     
     // Instantiate LFSR
     lfsr_generator #(
@@ -73,7 +70,7 @@ module histogram_decompressor #(
     ) lfsr_inst (
         .clk(clk),
         .rst_n(rst_n),
-        .enable(lfsr_enable),
+        .enable(decompressing),
         .lfsr_out(lfsr_value)
     );
     
@@ -81,7 +78,7 @@ module histogram_decompressor #(
     always @(*) begin
         selected_bin = 2'b00; // Default
         
-        case (random_2bit)
+        case (lfsr_value[1:0])
             2'b00: begin
                 if (work_count_00 > 0) selected_bin = 2'b00;
                 else if (work_count_01 > 0) selected_bin = 2'b01;
@@ -122,7 +119,6 @@ module histogram_decompressor #(
             valid_out <= 0;
             decompress_done <= 0;
             decompressing <= 0;
-            lfsr_enable <= 1; // Enable LFSR by default
         end else begin
             // Start decompression
             if (start_decompress && !decompressing) begin
@@ -137,12 +133,11 @@ module histogram_decompressor #(
             end
             // Continue decompression
             else if (decompressing && output_count < STREAM_LENGTH) begin
-                // Generate output based on selected bin
+                // Check if selected bin has remaining count and generate output
                 case (selected_bin)
                     2'b00: begin
                         if (work_count_00 > 0) begin
-                            stream_a <= 0;
-                            stream_b <= 0;
+                            {stream_a, stream_b} <= 2'b00;
                             valid_out <= 1;
                             work_count_00 <= work_count_00 - 1;
                             output_count <= output_count + 1;
@@ -152,8 +147,7 @@ module histogram_decompressor #(
                     end
                     2'b01: begin
                         if (work_count_01 > 0) begin
-                            stream_a <= 0;
-                            stream_b <= 1;
+                            {stream_a, stream_b} <= 2'b01;
                             valid_out <= 1;
                             work_count_01 <= work_count_01 - 1;
                             output_count <= output_count + 1;
@@ -163,8 +157,7 @@ module histogram_decompressor #(
                     end
                     2'b10: begin
                         if (work_count_10 > 0) begin
-                            stream_a <= 1;
-                            stream_b <= 0;
+                            {stream_a, stream_b} <= 2'b10;
                             valid_out <= 1;
                             work_count_10 <= work_count_10 - 1;
                             output_count <= output_count + 1;
@@ -174,8 +167,7 @@ module histogram_decompressor #(
                     end
                     2'b11: begin
                         if (work_count_11 > 0) begin
-                            stream_a <= 1;
-                            stream_b <= 1;
+                            {stream_a, stream_b} <= 2'b11;
                             valid_out <= 1;
                             work_count_11 <= work_count_11 - 1;
                             output_count <= output_count + 1;
