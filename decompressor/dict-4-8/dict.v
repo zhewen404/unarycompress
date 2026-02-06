@@ -27,14 +27,20 @@ module mux_8to1 #(
     end
 endmodule
 
-// Modular decompressor using MUX component
+// Modular decompressor using MUX component with parallel-to-serial output
 module dict_decompressor #(
     parameter CHUNK_SIZE = 4,
     parameter CODEBOOK_SIZE = 8,
     parameter INDEX_BITS = $clog2(CODEBOOK_SIZE)
 )(
+    input wire clk,
+    input wire rst_n,
     input wire [INDEX_BITS-1:0] compressed_index,
-    output wire [CHUNK_SIZE-1:0] decompressed_chunk
+    input wire load,           // Load new chunk into shift register
+    input wire shift_enable,   // Enable serial shifting
+    output wire [CHUNK_SIZE-1:0] decompressed_chunk, // Parallel output
+    output wire serial_out,    // Serial output (MSB first)
+    output wire shift_done     // Indicates all bits have been shifted out
 );
 
     // Hardwired codebook entries (same as compressor)
@@ -57,5 +63,30 @@ module dict_decompressor #(
         .data4(cb4), .data5(cb5), .data6(cb6), .data7(cb7),
         .data_output(decompressed_chunk)
     );
+
+    // Parallel-to-serial shift register
+    reg [CHUNK_SIZE-1:0] shift_reg;
+    reg [$clog2(CHUNK_SIZE+1)-1:0] bit_count;
+    
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            shift_reg <= {CHUNK_SIZE{1'b0}};
+            bit_count <= 0;
+        end else begin
+            if (load) begin
+                // Load decompressed chunk into shift register
+                shift_reg <= decompressed_chunk;
+                bit_count <= 0;
+            end else if (shift_enable && bit_count < CHUNK_SIZE) begin
+                // Shift left to output MSB first
+                shift_reg <= {shift_reg[CHUNK_SIZE-2:0], 1'b0};
+                bit_count <= bit_count + 1;
+            end
+        end
+    end
+    
+    // Output assignments - output MSB
+    assign serial_out = shift_reg[CHUNK_SIZE-1];  // MSB output first
+    assign shift_done = (bit_count >= CHUNK_SIZE); // All bits shifted out
 
 endmodule
