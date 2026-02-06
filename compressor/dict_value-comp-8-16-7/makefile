@@ -1,9 +1,23 @@
-DOTV_NAME=histogram
-MODULE_NAME=register
-DIR_NAME=histogram-7
+DOTV_NAME=dict_value
+MODULE_NAME=dict_value_compressor
+DIR_NAME=dict_value-comp-8-16-7
 ROOT_DIR=../..
 
 
+# Default target
+all: run
+
+# Compile and run simulation
+run: $(DOTV_NAME)_sim
+	./$(DOTV_NAME)_sim
+
+# Compile testbench
+$(DOTV_NAME)_sim: $(DOTV_NAME).v $(DOTV_NAME)_tb.v
+	iverilog -o $(DOTV_NAME)_sim $(DOTV_NAME).v $(DOTV_NAME)_tb.v
+
+# Clean generated files
+clean:
+	rm -f $(DOTV_NAME)_sim *.vcd
 
 # preproc synthesis scripts
 preproc:
@@ -11,6 +25,7 @@ preproc:
 	cp $(ROOT_DIR)/syn_scripts/synthesis_area_opt.tcl .
 	cp $(ROOT_DIR)/syn_scripts/.synopsys_dc.setup .
 	cp $(ROOT_DIR)/syn_scripts/clean.sh .
+	chmod +x clean.sh
 	sed -i 's/\[dotv_name\]/$(DOTV_NAME)/g' run_synthesis.sh
 	sed -i 's/\[dotv_name\]/$(DOTV_NAME)/g' synthesis_area_opt.tcl
 	sed -i 's/\[module_name\]/$(MODULE_NAME)/g' run_synthesis.sh
@@ -31,4 +46,4 @@ synth: preproc
 	@grep "^-*$$" reports/power.rpt | tail -1
 	@grep "^Total.*mW$$" reports/power.rpt
 
-.PHONY: synth preproc
+.PHONY: all run clean synth preproc

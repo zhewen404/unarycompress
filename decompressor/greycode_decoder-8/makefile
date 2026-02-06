@@ -35,5 +35,13 @@ preproc:
 synth: preproc
 	chmod +x run_synthesis.sh
 	./run_synthesis.sh
+	@echo "Parsing area results..."
+	@echo "Combinational area: $$(grep 'Combinational area:' reports/area_total.rpt | awk '{print $$3}')"
+	@echo "Noncombinational area: $$(grep 'Noncombinational area:' reports/area_total.rpt | awk '{print $$3}')"
+	@echo "Parsing power results..."
+	@grep "^sequential" reports/power.rpt
+	@grep "^combinational" reports/power.rpt
+	@grep "^-*$$" reports/power.rpt | tail -1
+	@grep "^Total.*mW$$" reports/power.rpt
 
 .PHONY: all run clean synth preproc

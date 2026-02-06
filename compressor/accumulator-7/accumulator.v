@@ -25,7 +25,6 @@ module register #(
 )(
     input  wire                    clk,
     input  wire                    rst_n,
-    input  wire                    clear,          // Synchronous clear
     input  wire                    enable,         // Load enable
     input  wire [WIDTH-1:0]        data_in,        // Data to store
     output reg  [WIDTH-1:0]        data_out        // Stored data
@@ -33,8 +32,6 @@ module register #(
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            data_out <= {WIDTH{1'b0}};
-        end else if (clear) begin
             data_out <= {WIDTH{1'b0}};
         end else if (enable) begin
             data_out <= data_in;
@@ -54,7 +51,6 @@ module accumulator #(
 )(
     input  wire                    clk,
     input  wire                    rst_n,
-    input  wire                    clear,          // Synchronous clear
     input  wire                    enable,         // Accumulate enable
     input  wire [DATA_WIDTH-1:0]   data_in,        // Data to accumulate
     output wire [ACC_WIDTH-1:0]    acc_out         // Accumulated result
@@ -80,7 +76,6 @@ module accumulator #(
     ) u_register (
         .clk(clk),
         .rst_n(rst_n),
-        .clear(clear),
         .enable(enable),
         .data_in(sum),
         .data_out(acc_out)
