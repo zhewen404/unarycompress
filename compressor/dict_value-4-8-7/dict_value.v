@@ -19,37 +19,8 @@ module dict_value_compressor #(
     // Shift register to accumulate input bits
     reg [CHUNK_SIZE-1:0] shift_reg;
     reg [$clog2(CHUNK_SIZE+1)-1:0] bit_count;
-    
-    // Internal compression signals
-    wire [CHUNK_SIZE-1:0] chunk_to_compress;
-    reg [INDEX_BITS-1:0] compression_result;
 
-    // Lookup table for direct mapping from 4-bit input to best codebook index
-    // Pre-calculated based on: weight priority + hamming distance tiebreaker
-    // Codebook: cb0=0000, cb1=0010, cb2=1001, cb3=1011, cb4=1111, cb5=1000, cb6=1100, cb7=0111
-    always @(*) begin
-        case (chunk_to_compress)
-            4'b0000: compression_result = 3'd0; 
-            4'b0001: compression_result = 3'd1; 
-            4'b0010: compression_result = 3'd1; 
-            4'b0011: compression_result = 3'd2; 
-            4'b0100: compression_result = 3'd5; 
-            4'b0101: compression_result = 3'd2; 
-            4'b0110: compression_result = 3'd6; 
-            4'b0111: compression_result = 3'd7; 
-            4'b1000: compression_result = 3'd5; 
-            4'b1001: compression_result = 3'd2; 
-            4'b1010: compression_result = 3'd2; 
-            4'b1011: compression_result = 3'd3; 
-            4'b1100: compression_result = 3'd6; 
-            4'b1101: compression_result = 3'd3; 
-            4'b1110: compression_result = 3'd3; 
-            4'b1111: compression_result = 3'd4; 
-            default: compression_result = 3'd0;
-        endcase
-    end
-
-    // Shift register logic
+    // Shift register logic with integrated lookup
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             shift_reg <= {CHUNK_SIZE{1'b0}};
@@ -66,40 +37,35 @@ module dict_value_compressor #(
                 if (bit_count == CHUNK_SIZE-1) begin
                     // We have a complete chunk, process it
                     bit_count <= 0;
-                    compressed_index <= compression_result;
                     compressed_valid <= 1'b1;
+                    
+                    // Direct lookup
+                    case ({shift_reg[CHUNK_SIZE-2:0], data_in})
+                        4'b0000: compressed_index <= 3'd0; 
+                        4'b0001: compressed_index <= 3'd1; 
+                        4'b0010: compressed_index <= 3'd1; 
+                        4'b0011: compressed_index <= 3'd2; 
+                        4'b0100: compressed_index <= 3'd5; 
+                        4'b0101: compressed_index <= 3'd2; 
+                        4'b0110: compressed_index <= 3'd6; 
+                        4'b0111: compressed_index <= 3'd7; 
+                        4'b1000: compressed_index <= 3'd5; 
+                        4'b1001: compressed_index <= 3'd2; 
+                        4'b1010: compressed_index <= 3'd2; 
+                        4'b1011: compressed_index <= 3'd3; 
+                        4'b1100: compressed_index <= 3'd6; 
+                        4'b1101: compressed_index <= 3'd3; 
+                        4'b1110: compressed_index <= 3'd3; 
+                        4'b1111: compressed_index <= 3'd4; 
+                        default: compressed_index <= 3'd0;
+                    endcase
                 end else begin
                     bit_count <= bit_count + 1;
                 end
             end
         end
     end
-    
-    // Assign chunk for compression (current shift register contents)
-    assign chunk_to_compress = {shift_reg[CHUNK_SIZE-2:0], data_in};
 
-endmodule
-
-module register #(
-    parameter WIDTH = 8                            // Register width
-)(
-    input  wire                    clk,
-    input  wire                    rst_n,
-    input  wire                    clear,          // Synchronous clear
-    input  wire                    enable,         // Load enable
-    input  wire [WIDTH-1:0]        data_in,        // Data to store
-    output reg  [WIDTH-1:0]        data_out        // Stored data
-);
-
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            data_out <= {WIDTH{1'b0}};
-        end else if (clear) begin
-            data_out <= {WIDTH{1'b0}};
-        end else if (enable) begin
-            data_out <= data_in;
-        end
-    end
 endmodule
 
 module dict_value_compressor_with_reg #(

@@ -1,6 +1,6 @@
 DOTV_NAME=dict_value
-MODULE_NAME=dict_value_compressor
-DIR_NAME=dict_value-comp-4-8-7
+MODULE_NAME=dict_value_compressor_with_reg
+DIR_NAME=dict_value-4-8-7
 ROOT_DIR=../..
 
 # Default target
