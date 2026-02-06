@@ -58,7 +58,6 @@ module histogram_decompressor #(
     reg [COUNTER_WIDTH-1:0] work_count_11;
     
     // Output counter and active flag
-    reg [COUNTER_WIDTH-1:0] output_count;
     reg decompressing;
     
     // Random bin selection logic
@@ -113,7 +112,6 @@ module histogram_decompressor #(
             work_count_01 <= 0;
             work_count_10 <= 0;
             work_count_11 <= 0;
-            output_count <= 0;
             stream_a <= 0;
             stream_b <= 0;
             valid_out <= 0;
@@ -126,13 +124,12 @@ module histogram_decompressor #(
                 work_count_01 <= count_01;
                 work_count_10 <= count_10;
                 work_count_11 <= count_11;
-                output_count <= 0;
                 decompress_done <= 0;
                 decompressing <= 1;
                 valid_out <= 0;
             end
             // Continue decompression
-            else if (decompressing && output_count < STREAM_LENGTH) begin
+            else if (decompressing && (work_count_00 > 0 || work_count_01 > 0 || work_count_10 > 0 || work_count_11 > 0)) begin
                 // Check if selected bin has remaining count and generate output
                 case (selected_bin)
                     2'b00: begin
@@ -140,7 +137,6 @@ module histogram_decompressor #(
                             {stream_a, stream_b} <= 2'b00;
                             valid_out <= 1;
                             work_count_00 <= work_count_00 - 1;
-                            output_count <= output_count + 1;
                         end else begin
                             valid_out <= 0;
                         end
@@ -150,7 +146,6 @@ module histogram_decompressor #(
                             {stream_a, stream_b} <= 2'b01;
                             valid_out <= 1;
                             work_count_01 <= work_count_01 - 1;
-                            output_count <= output_count + 1;
                         end else begin
                             valid_out <= 0;
                         end
@@ -160,7 +155,6 @@ module histogram_decompressor #(
                             {stream_a, stream_b} <= 2'b10;
                             valid_out <= 1;
                             work_count_10 <= work_count_10 - 1;
-                            output_count <= output_count + 1;
                         end else begin
                             valid_out <= 0;
                         end
@@ -170,18 +164,32 @@ module histogram_decompressor #(
                             {stream_a, stream_b} <= 2'b11;
                             valid_out <= 1;
                             work_count_11 <= work_count_11 - 1;
-                            output_count <= output_count + 1;
                         end else begin
                             valid_out <= 0;
                         end
                     end
                 endcase
                 
-                // Check if done
-                if (output_count + 1 >= STREAM_LENGTH) begin
+                // Check if done (all counters are zero)
+                if (work_count_00 == 1 && selected_bin == 2'b00 && work_count_01 == 0 && work_count_10 == 0 && work_count_11 == 0) begin
+                    decompressing <= 0;
+                    decompress_done <= 1;
+                end else if (work_count_01 == 1 && selected_bin == 2'b01 && work_count_00 == 0 && work_count_10 == 0 && work_count_11 == 0) begin
+                    decompressing <= 0;
+                    decompress_done <= 1;
+                end else if (work_count_10 == 1 && selected_bin == 2'b10 && work_count_00 == 0 && work_count_01 == 0 && work_count_11 == 0) begin
+                    decompressing <= 0;
+                    decompress_done <= 1;
+                end else if (work_count_11 == 1 && selected_bin == 2'b11 && work_count_00 == 0 && work_count_01 == 0 && work_count_10 == 0) begin
                     decompressing <= 0;
                     decompress_done <= 1;
                 end
+            end
+            // Finished decompression (all counters zero)
+            else if (decompressing) begin
+                decompressing <= 0;
+                decompress_done <= 1;
+                valid_out <= 0;
             end
             // Finished decompression
             else if (!decompressing) begin
