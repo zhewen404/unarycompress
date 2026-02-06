@@ -18,7 +18,6 @@ module histogram_tb();
     wire [COUNTER_WIDTH-1:0] count_01;
     wire [COUNTER_WIDTH-1:0] count_10;
     wire [COUNTER_WIDTH-1:0] count_11;
-    wire compress_done;
     
     // Test variables
     reg [STREAM_LENGTH-1:0] test_stream_a;
@@ -42,8 +41,7 @@ module histogram_tb();
         .count_00(count_00),
         .count_01(count_01),
         .count_10(count_10),
-        .count_11(count_11),
-        .compress_done(compress_done)
+        .count_11(count_11)
     );
     
     // Clock generation
@@ -109,12 +107,8 @@ module histogram_tb();
             
             valid_in = 0;
             
-            // Wait for compression to complete
-            while (!compress_done) begin
-                @(posedge clk);
-            end
-            
-            @(posedge clk);  // Extra cycle for stability
+            // Wait one extra cycle for final update
+            @(posedge clk);
         end
     endtask
     

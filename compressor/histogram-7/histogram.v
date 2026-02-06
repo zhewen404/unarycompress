@@ -12,13 +12,9 @@ module histogram_compressor #(
     output reg [COUNTER_WIDTH-1:0] count_00,
     output reg [COUNTER_WIDTH-1:0] count_01,
     output reg [COUNTER_WIDTH-1:0] count_10,
-    output reg [COUNTER_WIDTH-1:0] count_11,
-    output reg compress_done
+    output reg [COUNTER_WIDTH-1:0] count_11
 );
 
-    // Counter for tracking input stream position
-    reg [COUNTER_WIDTH-1:0] input_count;
-    
     // Compression Logic
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -26,22 +22,14 @@ module histogram_compressor #(
             count_01 <= 0;
             count_10 <= 0;
             count_11 <= 0;
-            input_count <= 0;
-            compress_done <= 0;
         end else begin
-            if (valid_in && !compress_done) begin
+            if (valid_in) begin
                 case ({stream_a, stream_b})
                     2'b00: count_00 <= count_00 + 1;
                     2'b01: count_01 <= count_01 + 1;
                     2'b10: count_10 <= count_10 + 1;
                     2'b11: count_11 <= count_11 + 1;
                 endcase
-                
-                input_count <= input_count + 1;
-                
-                if (input_count == STREAM_LENGTH - 1) begin
-                    compress_done <= 1;
-                end
             end
         end
     end
