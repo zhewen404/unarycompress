@@ -23,6 +23,7 @@ synth: preproc
 	chmod +x run_synthesis.sh
 	./run_synthesis.sh
 	@echo "Parsing area results..."
+	@echo "Number of sequential cells: $$(grep 'Number of sequential cells:' reports/area_total.rpt | awk '{print $$5}')"
 	@echo "Combinational area: $$(grep 'Combinational area:' reports/area_total.rpt | awk '{print $$3}')"
 	@echo "Noncombinational area: $$(grep 'Noncombinational area:' reports/area_total.rpt | awk '{print $$3}')"
 	@echo "Parsing power results..."
