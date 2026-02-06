@@ -28,7 +28,7 @@
 //-----------------------------------------------------------------------------
 
 module lfsr_bitstream_gen #(
-    parameter N = 7  // Bit width, L = 2^N (default: 128-bit bitstream)
+    parameter N = 8  // Bit width, L = 2^N (default: 128-bit bitstream)
 )(
     input  wire             clk,
     input  wire             rst_n,
@@ -87,17 +87,46 @@ module lfsr_bitstream_gen #(
             lfsr_reg <= {lfsr_reg[N-2:0], feedback};
         end
     end
+
+    wire [N-1:0] k_reg;
+    register #(
+        .WIDTH(N)
+    ) k_register (
+        .clk(clk),
+        .rst_n(rst_n),
+        .enable(load),
+        .data_in(k),
+        .data_out(k_reg)
+    );
     
     //-------------------------------------------------------------------------
     // Stochastic Bit Generation
     // Output '1' if LFSR value < k, '0' otherwise
     // This produces a bitstream where P(x_out=1) ≈ k / 2^N
     //-------------------------------------------------------------------------
-    assign x_out = (lfsr_reg < k);
+    assign x_out = (lfsr_reg < k_reg);
     
     //-------------------------------------------------------------------------
     // Debug output
     //-------------------------------------------------------------------------
     assign lfsr_val = lfsr_reg;
 
+endmodule
+
+module register #(
+    parameter WIDTH = 8                           // Register width
+)(
+    input  wire                    clk,
+    input  wire                    rst_n,
+    input  wire                    enable,         // Load enable
+    input  wire [WIDTH-1:0]        data_in,        // Data to store
+    output reg  [WIDTH-1:0]        data_out        // Stored data
+);
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            data_out <= {WIDTH{1'b0}};
+        end else if (enable) begin
+            data_out <= data_in;
+        end
+    end
 endmodule

@@ -101,6 +101,9 @@ module lfsr_bitstream_gen_tb;
         input integer num_cycles;
         begin
             k = test_k;
+            load = 1;
+            @(posedge clk);
+            load = 0;
             one_count = 0;
             enable = 1;
             

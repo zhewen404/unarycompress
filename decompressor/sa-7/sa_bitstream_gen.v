@@ -50,8 +50,19 @@ module sa_bitstream_gen #(
     //-------------------------------------------------------------------------
     wire [N:0] sum;
     wire       overflow;
+
+    wire [N-1:0] k_reg;
+    register #(
+        .WIDTH(N)
+    ) k_register (
+        .clk(clk),
+        .rst_n(rst_n),
+        .enable(1'b1),
+        .data_in(k),
+        .data_out(k_reg)
+    );
     
-    assign sum = {1'b0, accumulator} + {1'b0, k};
+    assign sum = {1'b0, accumulator} + {1'b0, k_reg};
     assign overflow = sum[N];  // Carry-out indicates overflow
     
     //-------------------------------------------------------------------------
@@ -86,6 +97,25 @@ module sa_bitstream_gen #(
     assign acc_val = accumulator;
 
 endmodule
+
+module register #(
+    parameter WIDTH = 7                           // Register width
+)(
+    input  wire                    clk,
+    input  wire                    rst_n,
+    input  wire                    enable,         // Load enable
+    input  wire [WIDTH-1:0]        data_in,        // Data to store
+    output reg  [WIDTH-1:0]        data_out        // Stored data
+);
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            data_out <= {WIDTH{1'b0}};
+        end else if (enable) begin
+            data_out <= data_in;
+        end
+    end
+endmodule
+
 
 
 
