@@ -5,13 +5,17 @@ from matplotlib.colors import LogNorm
 import seaborn as sns
 from concurrent.futures import ProcessPoolExecutor
 import multiprocessing as mp
+import os
+
+# Set matplotlib font sizes
+plt.rcParams.update({'font.size': 15})
 
 L = 256
 PRECISION = 32
 TRAILS = 50
 GRID_SIZE = 50  # Number of bins for density grid
 CHUNK_SIZE = 500  # Process in chunks to avoid memory issues
-MAX_WORKERS = min(22, mp.cpu_count())  # Limit workers to avoid memory overload
+MAX_WORKERS = min(23, mp.cpu_count())  # Limit workers to avoid memory overload
 
 def print_dict_results(results):
     for key, value in results.items():
@@ -135,20 +139,45 @@ for codec in codec_arr:
 print(f"Global SCC range: [{global_scc_min:.3f}, {global_scc_max:.3f}]")
 print(f"Global ZCE range: [{global_zce_min:.3f}, {global_zce_max:.3f}]")
 
-# Create SCC plots - one subplot per codec
-n_codecs = len(codec_arr)
-cols = 3  # 3 columns
-rows = (n_codecs + cols - 1) // cols  # Calculate rows needed
+# Calculate global density maximum for consistent colorbar scaling
+max_density_scc = 0
+max_density_zce = 0
 
-# SCC Plot
-fig_scc, axes_scc = plt.subplots(rows, cols, figsize=(18, 6*rows))
-if rows == 1:
-    axes_scc = [axes_scc]  # Make it iterable for single row
-axes_scc = axes_scc.flatten() if rows > 1 else axes_scc
+for codec in codec_arr:
+    codec_name = codec.get_name()
+    scc_inputs = codec_data[codec_name]['scc_input']
+    scc_outputs = codec_data[codec_name]['scc_output']
+    zce_inputs = codec_data[codec_name]['zce_input']
+    zce_outputs = codec_data[codec_name]['zce_output']
+    
+    if scc_inputs and scc_outputs:
+        bins_x = np.linspace(global_scc_min, global_scc_max, GRID_SIZE)
+        bins_y = np.linspace(global_scc_min, global_scc_max, GRID_SIZE)
+        density, _, _ = np.histogram2d(scc_inputs, scc_outputs, bins=[bins_x, bins_y])
+        max_density_scc = max(max_density_scc, density.max())
+    
+    if zce_inputs and zce_outputs:
+        bins_x = np.linspace(global_zce_min, global_zce_max, GRID_SIZE)
+        bins_y = np.linspace(global_zce_min, global_zce_max, GRID_SIZE)
+        density, _, _ = np.histogram2d(zce_inputs, zce_outputs, bins=[bins_x, bins_y])
+        max_density_zce = max(max_density_zce, density.max())
 
+print(f"Global SCC density max: {max_density_scc}")
+print(f"Global ZCE density max: {max_density_zce}")
+
+# Create output directory if it doesn't exist
+output_dir = 'correlation_density'
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+    print(f"Created directory: {output_dir}")
+
+# Create individual SCC plots for each codec
+# Create individual SCC plots for each codec
 for i, codec in enumerate(codec_arr):
     codec_name = codec.get_name()
-    ax = axes_scc[i]
+    
+    # Create individual figure for each codec
+    fig, ax = plt.subplots(1, 1, figsize=(4.5, 4.5))
     
     scc_inputs = codec_data[codec_name]['scc_input']
     scc_outputs = codec_data[codec_name]['scc_output']
@@ -170,39 +199,36 @@ for i, codec in enumerate(codec_arr):
         # Create heatmap
         im = ax.imshow(density_processed.T, origin='lower', 
                       extent=[global_scc_min, global_scc_max, global_scc_min, global_scc_max],
-                      cmap='viridis', norm=LogNorm(vmin=1), aspect='equal')
+                      cmap='viridis', norm=LogNorm(vmin=1, vmax=max_density_scc), aspect='equal')
         
         # Add colorbar
         cbar = plt.colorbar(im, ax=ax, shrink=0.8)
-        cbar.set_label('Point Density (log scale)', fontsize=10)
+        # cbar.set_label('Point Density (log scale)', fontsize=10)
         
         # Add perfect correlation line (y=x)
         ax.plot([global_scc_min, global_scc_max], [global_scc_min, global_scc_max], 'r--', alpha=0.7, linewidth=2, label='y=x')
     
-    ax.set_title(f'{codec_name}\nAvg Distance: {avg_distance:.6f}')
-    ax.set_xlabel('Input SCC')
-    ax.set_ylabel('Output SCC')
+    ax.set_title(f'Avg Distance: {avg_distance:.4f}', fontsize=15)
+    ax.set_xlabel('Input SCC', fontsize=15)
+    ax.set_ylabel('Output SCC', fontsize=15)
     ax.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    
+    # Save individual plot
+    filename_base = f'uncoinput_scc_density_{codec_name}_L{L}_T{TRAILS}'
+    plt.savefig(f'{output_dir}/{filename_base}.pdf', bbox_inches='tight')
+    print(f"SCC density plot for {codec_name} saved as '{output_dir}/{filename_base}.pdf'")
+    plt.show()
+    plt.close()  # Close figure to free memory
 
-# Hide any unused subplots
-for i in range(len(codec_arr), len(axes_scc)):
-    axes_scc[i].set_visible(False)
-
-plt.tight_layout()
-plt.savefig(f'uncoinput_scc_density_L{L}_T{TRAILS}_parallel.png', dpi=300, bbox_inches='tight')
-plt.savefig(f'uncoinput_scc_density_L{L}_T{TRAILS}_parallel.pdf', bbox_inches='tight')
-print(f"SCC density plot saved as 'uncoinput_scc_density_L{L}_T{TRAILS}_parallel.png' and 'uncoinput_scc_density_L{L}_T{TRAILS}_parallel.pdf'")
-plt.show()
-
-# ZCE Plot  
-fig_zce, axes_zce = plt.subplots(rows, cols, figsize=(18, 6*rows))
-if rows == 1:
-    axes_zce = [axes_zce]  # Make it iterable for single row
-axes_zce = axes_zce.flatten() if rows > 1 else axes_zce
-
+# Create individual ZCE plots for each codec  
+# Create individual ZCE plots for each codec
 for i, codec in enumerate(codec_arr):
     codec_name = codec.get_name()
-    ax = axes_zce[i]
+    
+    # Create individual figure for each codec
+    fig, ax = plt.subplots(1, 1, figsize=(4.5, 4.5))
     
     zce_inputs = codec_data[codec_name]['zce_input']
     zce_outputs = codec_data[codec_name]['zce_output']
@@ -224,29 +250,28 @@ for i, codec in enumerate(codec_arr):
         # Create heatmap with plasma colormap
         im = ax.imshow(density_processed.T, origin='lower', 
                       extent=[global_zce_min, global_zce_max, global_zce_min, global_zce_max],
-                      cmap='plasma', norm=LogNorm(vmin=1), aspect='equal')
+                      cmap='plasma', norm=LogNorm(vmin=1, vmax=max_density_zce), aspect='equal')
         
         # Add colorbar
         cbar = plt.colorbar(im, ax=ax, shrink=0.8)
-        cbar.set_label('Point Density (log scale)', fontsize=10)
+        # cbar.set_label('Point Density (log scale)', fontsize=12)
         
         # Add perfect correlation line (y=x)
         ax.plot([global_zce_min, global_zce_max], [global_zce_min, global_zce_max], 'r--', alpha=0.7, linewidth=2, label='y=x')
     
-    ax.set_title(f'{codec_name}\nAvg Distance: {avg_distance:.6f}')
-    ax.set_xlabel('Input ZCE')
-    ax.set_ylabel('Output ZCE')
+    ax.set_title(f'Avg Distance: {avg_distance:.4f}', fontsize=15)
+    ax.set_xlabel('Input ZCE', fontsize=15)
+    ax.set_ylabel('Output ZCE', fontsize=15)
     ax.grid(True, alpha=0.3)
-
-# Hide any unused subplots
-for i in range(len(codec_arr), len(axes_zce)):
-    axes_zce[i].set_visible(False)
-
-plt.tight_layout()
-plt.savefig(f'uncoinput_zce_density_L{L}_T{TRAILS}_parallel.png', dpi=300, bbox_inches='tight')
-plt.savefig(f'uncoinput_zce_density_L{L}_T{TRAILS}_parallel.pdf', bbox_inches='tight')
-print(f"ZCE density plot saved as 'uncoinput_zce_density_L{L}_T{TRAILS}_parallel.png' and 'uncoinput_zce_density_L{L}_T{TRAILS}_parallel.pdf'")
-plt.show()
+    
+    plt.tight_layout()
+    
+    # Save individual plot
+    filename_base = f'uncoinput_zce_density_{codec_name}_L{L}_T{TRAILS}'
+    plt.savefig(f'{output_dir}/{filename_base}.pdf', bbox_inches='tight')
+    print(f"ZCE density plot for {codec_name} saved as '{output_dir}/{filename_base}.pdf'")
+    plt.show()
+    plt.close()  # Close figure to free memory
 
 # Print summary statistics
 print(f"\nSummary Statistics:")
