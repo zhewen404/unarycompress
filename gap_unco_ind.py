@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from concurrent.futures import ProcessPoolExecutor
 import multiprocessing as mp
+import os
 
 L = 256
 TRAILS = 10
@@ -73,6 +74,12 @@ with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
 
 print(f"Completed processing {len(scc_input_data):,} data points")
 
+# Create output directory if it doesn't exist
+output_dir = 'gap_unco_ind'
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+    print(f"Created directory: {output_dir}")
+
 # Calculate aggregate metrics: average vertical distance to y=x line
 scc_vertical_distances = [abs(scc_output_data[i] - scc_input_data[i]) for i in range(len(scc_input_data))]
 zce_vertical_distances = [abs(zce_output_data[i] - zce_input_data[i]) for i in range(len(zce_input_data))]
@@ -115,9 +122,8 @@ ax2.plot([min_zce, max_zce], [min_zce, max_zce], 'r--', alpha=0.7, linewidth=2, 
 ax2.legend(bbox_to_anchor=(0.5, 1.02), loc='lower center')
 
 plt.tight_layout()
-plt.savefig(f'gap_unco_ind_scatter_L{L}_T{TRAILS}_parallel.png', dpi=300, bbox_inches='tight')
-plt.savefig(f'gap_unco_ind_scatter_L{L}_T{TRAILS}_parallel.pdf', bbox_inches='tight')
-print(f"Scatter plots saved as 'gap_unco_ind_scatter_L{L}_T{TRAILS}_parallel.png' and 'gap_unco_ind_scatter_L{L}_T{TRAILS}_parallel.pdf'")
+plt.savefig(f'{output_dir}/gap_unco_ind_scatter_L{L}_T{TRAILS}_parallel.pdf', bbox_inches='tight')
+print(f"Scatter plots saved as '{output_dir}/gap_unco_ind_scatter_L{L}_T{TRAILS}_parallel.pdf'")
 plt.show()
 
 # Print summary statistics

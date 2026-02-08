@@ -1,10 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from compdecomp import * 
+import os 
 
 ###### SA ######
 L=256
-TRAILS=10
+TRAILS=1
 sa_gen = BinarySA()
 
 codec_binarylfsr = BinaryLFSR()
@@ -63,6 +64,12 @@ print()
 # print_dict_results(value_in)
 # print_dict_results(value_out)
 
+# Create output directory if it doesn't exist
+output_dir = 'sa'
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+    print(f"Created directory: {output_dir}")
+
 # Calculate absolute differences and create plots
 x_values = list(range(0, L+1))
 
@@ -112,9 +119,8 @@ ax3.plot([min_val, max_val], [min_val, max_val], 'k--', alpha=0.5, linewidth=1, 
 ax3.legend(bbox_to_anchor=(0.5, 1.02), loc='lower center')
 
 plt.tight_layout()
-plt.savefig(f'sainput_saval_{TRAILS}.png', dpi=300, bbox_inches='tight')
-plt.savefig(f'sainput_sa_value_{TRAILS}.pdf', bbox_inches='tight')
-print(f"Plots saved as 'sainput_saval_{TRAILS}.png' and 'sainput_sa_value_{TRAILS}.pdf'")
+plt.savefig(f'{output_dir}/sainput_sa_value_{TRAILS}.pdf', bbox_inches='tight')
+print(f"Plots saved as '{output_dir}/sainput_sa_value_{TRAILS}.pdf'")
 plt.show()
 
 # Print summary statistics

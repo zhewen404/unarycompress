@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from compdecomp import *
+import os
 
 # Set matplotlib style
 plt.rcParams.update({
@@ -84,6 +85,12 @@ for a in range(0, L+1):
         value_out[codec_name][a] = np.mean(value_out_trials)
 print()
 
+# Create output directory if it doesn't exist
+output_dir = 'sa_sensitivity'
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+    print(f"Created directory: {output_dir}")
+
 # Organize data for heatmaps
 def parse_codec_name(codec_name):
     """Parse codec name to extract codebook_size, chunk_size, and method"""
@@ -163,9 +170,8 @@ ax4.set_xlabel('Codebook Size')
 ax4.set_ylabel('Chunk Size')
 
 plt.tight_layout(pad=2.0)
-plt.savefig(f'sa_input_sensitivity_heatmaps_L{L}_T{TRAILS}.png', dpi=300, bbox_inches='tight')
-plt.savefig(f'sa_input_sensitivity_heatmaps_L{L}_T{TRAILS}.pdf', bbox_inches='tight')
-print(f"Heatmaps saved as 'sa_input_sensitivity_heatmaps_L{L}_T{TRAILS}.png' and 'sa_input_sensitivity_heatmaps_L{L}_T{TRAILS}.pdf'")
+plt.savefig(f'{output_dir}/sa_input_sensitivity_heatmaps_L{L}_T{TRAILS}.pdf', bbox_inches='tight')
+print(f"Heatmaps saved as '{output_dir}/sa_input_sensitivity_heatmaps_L{L}_T{TRAILS}.pdf'")
 plt.show()
 
 # Print summary statistics

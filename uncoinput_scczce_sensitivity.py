@@ -12,7 +12,7 @@ import os
 plt.rcParams.update({'font.size': 15})
 
 L = 256
-TRAILS = 10
+TRAILS = 50
 GRID_SIZE = 50  # Number of bins for density grid
 CHUNK_SIZE = 500  # Process in chunks to avoid memory issues
 MAX_WORKERS = min(22, mp.cpu_count())  # Limit workers to avoid memory overload
