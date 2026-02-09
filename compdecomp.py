@@ -666,7 +666,10 @@ class DictCodec(Codec):
 
         else:
             raise NotImplementedError("Deterministic codebook is only implemented for chunk_size=4 and codebook_size=8. Please generate a random codebook for other configurations.")
-    
+        
+    def get_compression_ratio(self):
+        return float(self.chunk_size) / int(np.log2(self.codebook_size))
+
     def generate_rand_codebook(self):
         """
         Generates a codebook that is:

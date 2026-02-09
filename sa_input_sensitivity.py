@@ -130,49 +130,65 @@ value_max = max(df['Mean_Value_Diff'].max(), abs(df['Mean_Value_Diff'].min()))
 sa_min = 0  
 sa_max = max(df['Mean_SA_Diff'].max(), abs(df['Mean_SA_Diff'].min()))
 
-# Create heatmaps
-fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(12, 10))
-
-# Value plots
-# Hamming Value Differences
+# Prepare data splits
 df_hamming = df[df['Method'] == 'Hamming']
+df_value = df[df['Method'] == 'Value']
+
+# Hamming Value Differences
+fig, ax = plt.subplots(1, 1, figsize=(5,2.5))
 pivot_hamming_value = df_hamming.pivot(index='Chunk_Size', columns='Codebook_Size', values='Mean_Value_Diff')
-sns.heatmap(pivot_hamming_value, annot=True, fmt='.4f', cmap='viridis', ax=ax1, 
-           cbar_kws={'shrink': 0.6}, annot_kws={'fontsize': 11}, vmin=value_min, vmax=value_max)
-ax1.set_title('Hamming: Mean Value Absolute Difference')
-ax1.set_xlabel('Codebook Size')
-ax1.set_ylabel('Chunk Size')
+sns.heatmap(pivot_hamming_value, annot=True, fmt='.3f', cmap='viridis', ax=ax, 
+        #    cbar_kws={'label': 'Mean Value Absolute Difference'}, annot_kws={'size': 15}, 
+           vmin=value_min, vmax=value_max)
+# ax.set_title('Hamming: Mean Value Absolute Difference', fontsize=15)
+ax.set_xlabel('Codebook Size', fontsize=15)
+ax.set_ylabel('Chunk Size', fontsize=15)
+plt.tight_layout(pad=2.0)
+plt.savefig(f'{output_dir}/sa_input_value_hamming_L{L}_T{TRAILS}.pdf', bbox_inches='tight')
+print(f"Hamming Value heatmap saved as '{output_dir}/sa_input_value_hamming_L{L}_T{TRAILS}.pdf'")
+# plt.show()
 
 # Value Value Differences  
-df_value = df[df['Method'] == 'Value']
+fig, ax = plt.subplots(1, 1, figsize=(5,2.5))
 pivot_value_value = df_value.pivot(index='Chunk_Size', columns='Codebook_Size', values='Mean_Value_Diff')
-sns.heatmap(pivot_value_value, annot=True, fmt='.4f', cmap='viridis', ax=ax2,
-           cbar_kws={'shrink': 0.6}, annot_kws={'fontsize': 11}, vmin=value_min, vmax=value_max)
-ax2.set_title('Value: Mean Value Absolute Difference')
-ax2.set_xlabel('Codebook Size')
-ax2.set_ylabel('Chunk Size')
+sns.heatmap(pivot_value_value, annot=True, fmt='.3f', cmap='viridis', ax=ax,
+        #    cbar_kws={'label': 'Mean Value Absolute Difference'}, annot_kws={'size': 15}, 
+           vmin=value_min, vmax=value_max)
+# ax.set_title('Value: Mean Value Absolute Difference', fontsize=15)
+ax.set_xlabel('Codebook Size', fontsize=15)
+ax.set_ylabel('Chunk Size', fontsize=15)
+plt.tight_layout(pad=2.0)
+plt.savefig(f'{output_dir}/sa_input_value_value_L{L}_T{TRAILS}.pdf', bbox_inches='tight')
+print(f"Value Value heatmap saved as '{output_dir}/sa_input_value_value_L{L}_T{TRAILS}.pdf'")
+# plt.show()
 
-# SA plots
 # Hamming SA Differences
+fig, ax = plt.subplots(1, 1, figsize=(5,2.5))
 pivot_hamming_sa = df_hamming.pivot(index='Chunk_Size', columns='Codebook_Size', values='Mean_SA_Diff')
-sns.heatmap(pivot_hamming_sa, annot=True, fmt='.4f', cmap='plasma', ax=ax3,
-           cbar_kws={'shrink': 0.6}, annot_kws={'fontsize': 11}, vmin=sa_min, vmax=sa_max)
-ax3.set_title('Hamming: Mean SA Difference')
-ax3.set_xlabel('Codebook Size')
-ax3.set_ylabel('Chunk Size')
+sns.heatmap(pivot_hamming_sa, annot=True, fmt='.3f', cmap='plasma', ax=ax,
+        #    cbar_kws={'label': 'Mean SA Difference'}, annot_kws={'size': 15}, 
+           vmin=sa_min, vmax=sa_max)
+# ax.set_title('Hamming: Mean SA Difference', fontsize=15)
+ax.set_xlabel('Codebook Size', fontsize=15)
+ax.set_ylabel('Chunk Size', fontsize=15)
+plt.tight_layout(pad=2.0)
+plt.savefig(f'{output_dir}/sa_input_sa_hamming_L{L}_T{TRAILS}.pdf', bbox_inches='tight')
+print(f"Hamming SA heatmap saved as '{output_dir}/sa_input_sa_hamming_L{L}_T{TRAILS}.pdf'")
+# plt.show()
 
 # Value SA Differences
+fig, ax = plt.subplots(1, 1, figsize=(5,2.5))
 pivot_value_sa = df_value.pivot(index='Chunk_Size', columns='Codebook_Size', values='Mean_SA_Diff')
-sns.heatmap(pivot_value_sa, annot=True, fmt='.4f', cmap='plasma', ax=ax4,
-           cbar_kws={'shrink': 0.6}, annot_kws={'fontsize': 11}, vmin=sa_min, vmax=sa_max)
-ax4.set_title('Value: Mean SA Difference')
-ax4.set_xlabel('Codebook Size')
-ax4.set_ylabel('Chunk Size')
-
+sns.heatmap(pivot_value_sa, annot=True, fmt='.3f', cmap='plasma', ax=ax,
+        #    cbar_kws={'label': 'Mean SA Difference'}, annot_kws={'size': 15}, 
+           vmin=sa_min, vmax=sa_max)
+# ax.set_title('Value: Mean SA Difference', fontsize=15)
+ax.set_xlabel('Codebook Size', fontsize=15)
+ax.set_ylabel('Chunk Size', fontsize=15)
 plt.tight_layout(pad=2.0)
-plt.savefig(f'{output_dir}/sa_input_sensitivity_heatmaps_L{L}_T{TRAILS}.pdf', bbox_inches='tight')
-print(f"Heatmaps saved as '{output_dir}/sa_input_sensitivity_heatmaps_L{L}_T{TRAILS}.pdf'")
-plt.show()
+plt.savefig(f'{output_dir}/sa_input_sa_value_L{L}_T{TRAILS}.pdf', bbox_inches='tight')
+print(f"Value SA heatmap saved as '{output_dir}/sa_input_sa_value_L{L}_T{TRAILS}.pdf'")
+# plt.show()
 
 # Print summary statistics
 print("\n" + "="*80)
