@@ -1046,3 +1046,14 @@ class BinaryNegativelyCorrelated(Codec2D):
 # np.set_printoptions(threshold=np.inf, linewidth=200)
 # print(f"Codebook for {dictcodec2.get_name()}:")
 # print(dictcodec2.get_codebook())
+
+input_stream_a = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+bin_rand  = BinaryLFSR()
+sa_in = bin_rand.get_streaming_accuracy(input_stream_a, len(input_stream_a), sum(input_stream_a))
+
+input_stream_b = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+sa_out = bin_rand.get_streaming_accuracy(input_stream_b, len(input_stream_b), sum(input_stream_b))
+print(sa_in, sa_out)
+
+best, worst = bin_rand.get_best_and_worst_bitstreams(32, 15)
+print(f"Best bitstream: {best}, Worst bitstream: {worst}")
